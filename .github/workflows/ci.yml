@@ -1,0 +1,28 @@
+name: Luau checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  acrylic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Download Luau 0.746
+        shell: bash
+        run: |
+          curl --fail --location --retry 3 https://github.com/luau-lang/luau/releases/download/0.746/luau-ubuntu.zip --output "$RUNNER_TEMP/luau.zip"
+          echo "30f11c9cde8be2dc0e3066d210705532aac3726a2db89a6c5078080b6faa6cf8  $RUNNER_TEMP/luau.zip" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/luau"
+          unzip -q "$RUNNER_TEMP/luau.zip" -d "$RUNNER_TEMP/luau"
+          chmod +x "$RUNNER_TEMP/luau/luau" "$RUNNER_TEMP/luau/luau-compile"
+      - name: Compile distributed Lua files
+        shell: bash
+        run: '"$RUNNER_TEMP/luau/luau-compile" --null modules/ui/acrylic.lua examples/acrylic.lua'
+      - name: Run module checks
+        shell: bash
+        run: python3 tests/run.py --luau "$RUNNER_TEMP/luau/luau"
