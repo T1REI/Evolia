@@ -5,9 +5,7 @@ Apply a camera-aligned Glass mask and a shared `DepthOfFieldEffect` to existing 
 ## Load once
 
 ```lua
-local Acrylic = assert(loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/T1REI/Evolia/main/modules/ui/acrylic.lua"
-)))()
+local Acrylic = loadstring(game:HttpGet("https://raw.githubusercontent.com/T1REI/Evolia/main/modules/ui/acrylic.lua"))()
 ```
 
 This requires a client environment with `loadstring` and `game:HttpGet`. Loading returns the API without creating an effect. The first attachment starts rendering; removing the last attachment releases the shared resources. Loading several separate copies creates separate controllers, so reuse one API table.

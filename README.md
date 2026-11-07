@@ -17,9 +17,7 @@ Modules are distributed as standalone Lua files and loaded with `loadstring`. Ea
 Run this in a client environment that provides `loadstring` and `game:HttpGet`:
 
 ```lua
-local Acrylic = assert(loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/T1REI/Evolia/main/modules/ui/acrylic.lua"
-)))()
+local Acrylic = loadstring(game:HttpGet("https://raw.githubusercontent.com/T1REI/Evolia/main/modules/ui/acrylic.lua"))()
 
 -- Use a GuiObject from your own ScreenGui.
 local panel = game:GetService("Players").LocalPlayer.PlayerGui.MyGui.MyPanel

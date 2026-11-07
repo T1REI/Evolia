@@ -1,6 +1,4 @@
-local Acrylic = assert(loadstring(game:HttpGet(
-	"https://raw.githubusercontent.com/T1REI/Evolia/main/modules/ui/acrylic.lua"
-)))()
+local Acrylic = loadstring(game:HttpGet("https://raw.githubusercontent.com/T1REI/Evolia/main/modules/ui/acrylic.lua"))()
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
