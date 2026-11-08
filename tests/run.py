@@ -18,25 +18,34 @@ def main():
     module = (root / "modules/ui/acrylic.lua").read_text(encoding="utf-8")
     module_scope = mock + "\nlocal Acrylic = (function()\n" + module + "\nend)()\n"
     evolia = (root / "evolia.lua").read_text(encoding="utf-8")
+    controls = (root / "modules/ui/controls.lua").read_text(encoding="utf-8")
+    radial = (root / "modules/ui/radial.lua").read_text(encoding="utf-8")
     loader_mock = '''
 local environment = {}
 local requests = 0
 local function getgenv() return environment end
+local loadEvolia
 function game:HttpGet(url)
-    assert(url == "https://raw.githubusercontent.com/T1REI/Evolia/main/modules/ui/acrylic.lua")
+    assert(url == "https://raw.githubusercontent.com/T1REI/Evolia/main/evolia.lua"
+        or url:match("^https://raw%.githubusercontent%.com/T1REI/Evolia/main/modules/ui/"))
     requests += 1
-    return "acrylic-source"
+    return url:match("([^/]+)%.lua$")
 end
 local function loadstring(source)
-    assert(source == "acrylic-source")
-    return function() return Acrylic end
+    if source == "evolia" then return loadEvolia end
+    local modules = { acrylic = Acrylic, controls = Controls, radial = Radial }
+    assert(modules[source])
+    return function() return modules[source] end
 end
-local function loadEvolia()
+loadEvolia = function()
 '''
+    ui_scope = module_scope + "\nlocal Controls = (function()\n" + controls + "\nend)()\n" \
+        + "local Radial = (function()\n" + radial + "\nend)()\n" + loader_mock + evolia + "\nend\n"
     sources = {
         "acrylic": module_scope + (root / "tests/acrylic.spec.lua").read_text(encoding="utf-8"),
-        "evolia": module_scope + loader_mock + evolia + "\nend\n"
-        + (root / "tests/evolia.spec.lua").read_text(encoding="utf-8"),
+        "evolia": ui_scope + (root / "tests/evolia.spec.lua").read_text(encoding="utf-8"),
+        "example": ui_scope + (root / "examples/evolia.lua").read_text(encoding="utf-8")
+        + "\n" + (root / "tests/example.spec.lua").read_text(encoding="utf-8"),
     }
     with tempfile.TemporaryDirectory(prefix="evolia-tests-") as directory:
         for name, source in sources.items():

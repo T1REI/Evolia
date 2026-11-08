@@ -2,57 +2,44 @@
 
 [![Luau checks](https://github.com/T1REI/Evolia/actions/workflows/ci.yml/badge.svg)](https://github.com/T1REI/Evolia/actions/workflows/ci.yml)
 
-A Roblox UI library by **T1REI**, built incrementally from reusable client modules.
-
-The current UI stage is a compact **diamond of 85 tiny white Acrylic squares**, arranged in 13 centered rows with equal sizes and gaps. Each square measures 12 × 12 UI pixels, separated by 4-pixel gaps. Rounded corners and a gentle reveal from the center accompany fullscreen background blur. Right Shift toggles the interface; the opening key is configurable. No text, buttons, or navigation are added yet.
-
-## Modules
-
-| Module | Path | Description |
-| --- | --- | --- |
-| [Acrylic](docs/acrylic.md) | [`modules/ui/acrylic.lua`](modules/ui/acrylic.lua) | Glass and depth-of-field blur attached to your existing UI. |
+A customizable circular Roblox UI library by **T1REI**. Tabs sit on an orbit around a central Acrylic panel; controls scroll inside the circle. Soft light and dark palettes, spring animations, and live appearance settings are included.
 
 ## Quick start
-
-Run this in a client environment that provides `loadstring` and `game:HttpGet`:
 
 ```lua
 local Evolia = loadstring(game:HttpGet("https://raw.githubusercontent.com/T1REI/Evolia/main/evolia.lua"))()
 local Window = Evolia:CreateWindow({
-    name = "Evolia",
+    name = "My space",
+    subtitle = "Make yourself at home.",
     toggleKey = "RightShift",
+    theme = "light",
+    visible = true,
 })
+local Home = Window:CreateTab({ name = "Home" })
+Home:CreateToggle({ name = "Enabled", value = false, callback = function(value)
+    print(value)
+end })
+Window:CreateSettingsTab({ name = "Appearance" })
 ```
 
-Loading returns an API. `CreateWindow` loads the Acrylic module, starts hidden, and returns a window handle with `Show`, `Hide`, `Toggle`, `SetToggleKey`, and `Destroy`. Each new window replaces the previous Evolia runtime. Standard Roblox LocalScripts do not provide this client loading path.
+The client environment must provide `loadstring` and `game:HttpGet`. The entry point loads the UI modules from this repository. Standard Roblox LocalScripts do not provide this loading path. Reinitialization removes the previous Evolia runtime. Right Shift toggles visibility; `Window:SetToggleKey("F4")` changes the key immediately.
 
-Call `Window:SetToggleKey("F4")` to change the opening key at runtime.
+## Elements
 
-The API follows the create-and-return-a-handle approach of [Rayfield Gen2](https://docs.sirius.menu/rayfield-gen2), with camelCase settings and PascalCase aliases. This stage does not implement Rayfield's tabs or elements. Existing `Evolia:Init({...})` calls remain supported.
+Buttons, toggles, sliders, searchable single/multiple dropdowns, text inputs, keyboard/mouse keybinds, HSV/hex color pickers with alpha, animated stats, progress bars, bounded consoles, text cards, labels, paragraphs, sections, and dividers. Nested row/column groups organize controls. Notifications, toasts, modal popups, and title tags complete the feedback tools.
 
-See the [Evolia reference](docs/evolia.md) for settings and lifecycle methods. The standalone [Acrylic reference](docs/acrylic.md) covers panel effects and fullscreen blur. [`examples/evolia.lua`](examples/evolia.lua) runs the current UI stage; [`examples/acrylic.lua`](examples/acrylic.lua) is a separate panel demonstration.
+Every value control has `Get` and `Set`, including silent updates. Handles support locking, visibility, reordering, styling, and cleanup. Window options control geometry, typography, colors, blur, Acrylic, and animation. `CreateSettingsTab` lets the user change appearance directly in the interface. State is session-local; no files are written automatically.
 
-## Layout
+See the [UI reference](docs/evolia.md) for the complete API and customization options. Run [the complete demonstration](examples/evolia.lua) to explore every element. `main.lua` is the ignored local copy of that demonstration.
 
-```text
-evolia.lua
-modules/
-  ui/
-    acrylic.lua
-examples/
-  evolia.lua
-  acrylic.lua
-docs/
-  evolia.md
-  acrylic.md
-tests/
-  evolia.spec.lua
-  acrylic.spec.lua
-  roblox_mock.lua
-  run.py
-```
+## Modules
 
-`main.lua` is an ignored local playground and is not distributed.
+| Module | Purpose |
+| --- | --- |
+| [`evolia.lua`](evolia.lua) | GitHub loader and runtime lifecycle. |
+| [`modules/ui/radial.lua`](modules/ui/radial.lua) | Circular window, orbit navigation, animation, feedback, and appearance. |
+| [`modules/ui/controls.lua`](modules/ui/controls.lua) | Elements, groups, value handling, and pointer interaction. |
+| [`modules/ui/acrylic.lua`](modules/ui/acrylic.lua) | Reusable panel Glass/DOF and fullscreen blur. [Standalone reference](docs/acrylic.md). |
 
 ## Development
 
@@ -60,12 +47,10 @@ Install Python 3 and the official [Luau CLI](https://github.com/luau-lang/luau/r
 
 ```sh
 python tests/run.py --luau /path/to/luau
-luau-compile --null evolia.lua
-luau-compile --null modules/ui/acrylic.lua
-luau-compile --null examples/acrylic.lua
+luau-compile --null evolia.lua modules/ui/acrylic.lua modules/ui/radial.lua modules/ui/controls.lua examples/evolia.lua examples/acrylic.lua
 ```
 
-Tests execute the real library and module against a simulated Roblox API. They cover animation reversal, repeated input, frame-rate independence, keyboard filtering, geometry, rotation, clipping, settings, visibility, camera replacement, and cleanup. They do not validate GPU rendering or the subjective animation feel in a real client.
+Tests run the real sources against a simulated Roblox API. They validate control state and callbacks, pointer/key input, orbit layout, pagination, appearance changes, animation lifecycle, modal behavior, Acrylic geometry, and cleanup. GPU rendering, engine layout, touch ergonomics, and visual animation quality still require a real Roblox client.
 
 ## License
 
