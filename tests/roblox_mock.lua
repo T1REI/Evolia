@@ -54,7 +54,7 @@ end
 function CFrame.new(x,y,z) return setmetatable({X=x or 0,Y=y or 0,Z=z or 0,Angle=0,_kind='CFrame'},cf) end
 function CFrame.Angles(_,_,angle) local result=CFrame.new();result.Angle=angle;return result end
 local Color3 = {new=function(...) local v=vector(...);v._kind='Color3';return v end}
-Color3.fromRGB=Color3.new
+Color3.fromRGB=function(r,g,b) return Color3.new(r/255,g/255,b/255) end
 local UDim = {new=function(s,o) return {Scale=s,Offset=o,_kind="UDim"} end}
 local UDim2 = {new=function(xs,xo,ys,yo) return {X=UDim.new(xs,xo),Y=UDim.new(ys,yo)} end}
 function UDim2.fromOffset(x,y) return UDim2.new(0,x,0,y) end
@@ -64,6 +64,9 @@ local NumberSequenceKeypoint = {new=function(t,v) return {t,v} end}
 local Random = {new=function() return {NextNumber=function(_,a,b) return (a or 0)+0.37*((b or 1)-(a or 0)) end} end}
 local Enum = setmetatable({RenderPriority={Camera={Value=200},Last={Value=2000}}},{__index=function(t,k)
     local group=setmetatable({}, {__index=function(g,n)
+        if k=='KeyCode' and n~='Unknown' and n~='RightShift' and n~='LeftAlt' and n~='T' and n~='F4' then
+            error('Invalid KeyCode '..n)
+        end
         rawset(g,n,{_kind='EnumItem',EnumType=g,Name=n})
         return g[n]
     end})
@@ -84,13 +87,18 @@ inst.__index = function(o,k)
     if k == 'AbsoluteRotation' then return (o.Rotation or 0)+(o.Parent and o.Parent.AbsoluteRotation or 0) end
     if k == 'AbsoluteSize' then
         if o.ClassName=='PlayerGui' then return view end
-        if o.ClassName=='ScreenGui' then return view-coreInset end
+        if o.ClassName=='ScreenGui' then
+            return o.ScreenInsets==Enum.ScreenInsets.None and view or view-coreInset
+        end
         local p=o.Parent and o.Parent.AbsoluteSize or vector()
         local s=o.Size or UDim2.fromOffset(0,0)
         return vector(p.X*s.X.Scale+s.X.Offset,p.Y*s.Y.Scale+s.Y.Offset)
     end
     if k == 'AbsolutePosition' then
-        if o.ClassName=='PlayerGui' or o.ClassName=='ScreenGui' then return vector() end
+        if o.ClassName=='PlayerGui' then return vector() end
+        if o.ClassName=='ScreenGui' then
+            return o.ScreenInsets==Enum.ScreenInsets.None and coreInset*-1 or vector()
+        end
         local parent=o.Parent
         local p=parent and parent.AbsolutePosition or vector()
         local size=parent and parent.AbsoluteSize or vector()

@@ -3,7 +3,7 @@ local RunService = game:GetService("RunService")
 local GuiService = game:GetService("GuiService")
 local HttpService = game:GetService("HttpService")
 
-local Acrylic = { Version = "0.2.0" }
+local Acrylic = { Version = "0.2.1" }
 local Handle = {}
 Handle.__index = Handle
 
@@ -380,7 +380,8 @@ function Handle:SetOptions(changes)
 	assert(not self._destroyed, "Acrylic: handle was destroyed")
 	self._options = merge(self._options, changes, validators)
 	self._error, self._warned = nil, nil
-	resizeSlices(self)
+	if changes.CornerSegments ~= nil or changes.GlassColor ~= nil then resizeSlices(self)
+	elseif changes.EdgeCompensation ~= nil or changes.Padding ~= nil then self._cache = nil end
 	step()
 	return self
 end

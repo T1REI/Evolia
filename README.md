@@ -4,7 +4,7 @@
 
 A Roblox UI library by **T1REI**, built incrementally from reusable client modules.
 
-The current UI stage is intentionally minimal: **Right Shift toggles a smoothly animated fullscreen background blur**. No windows, buttons, tint overlays, or other UI elements are created at this stage.
+The current UI stage is a compact **3 × 2 grid of pastel-blue Acrylic squares** with rounded corners and a smooth reveal over fullscreen background blur. Right Shift toggles the interface; the opening key is configurable. No text, buttons, or navigation are added yet.
 
 ## Modules
 
@@ -18,10 +18,17 @@ Run this in a client environment that provides `loadstring` and `game:HttpGet`:
 
 ```lua
 local Evolia = loadstring(game:HttpGet("https://raw.githubusercontent.com/T1REI/Evolia/main/evolia.lua"))()
-Evolia:Init()
+local Window = Evolia:CreateWindow({
+    name = "Evolia",
+    toggleKey = "RightShift",
+})
 ```
 
-Loading returns an API. `Init` loads the Acrylic module, starts hidden, and binds Right Shift. A fresh initialized Evolia instance replaces its previous runtime. Standard Roblox LocalScripts do not provide this client loading path.
+Loading returns an API. `CreateWindow` loads the Acrylic module, starts hidden, and returns a window handle with `Show`, `Hide`, `Toggle`, `SetToggleKey`, and `Destroy`. Each new window replaces the previous Evolia runtime. Standard Roblox LocalScripts do not provide this client loading path.
+
+Call `Window:SetToggleKey("F4")` to change the opening key at runtime.
+
+The API follows the create-and-return-a-handle approach of [Rayfield Gen2](https://docs.sirius.menu/rayfield-gen2), with camelCase settings and PascalCase aliases. This stage does not implement Rayfield's tabs or elements. Existing `Evolia:Init({...})` calls remain supported.
 
 See the [Evolia reference](docs/evolia.md) for settings and lifecycle methods. The standalone [Acrylic reference](docs/acrylic.md) covers panel effects and fullscreen blur. [`examples/evolia.lua`](examples/evolia.lua) runs the current UI stage; [`examples/acrylic.lua`](examples/acrylic.lua) is a separate panel demonstration.
 
