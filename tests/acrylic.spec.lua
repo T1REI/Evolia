@@ -74,6 +74,22 @@ copy.Enabled = false
 assert(handle:IsEnabled(), "options table leaked")
 assert(not pcall(Acrylic.configure, { Intensity = 4 }))
 
+assert(not pcall(Acrylic.update, {
+	[handle] = { GlassTransparency = 0.8 },
+	[second] = { GlassTransparency = 5 },
+}))
+assert(handle:GetOptions().GlassTransparency == previousOptions.GlassTransparency,
+	"invalid batch partially changed options")
+assert(not pcall(Acrylic.update, { [{}] = { Enabled = false } }), "foreign handle accepted")
+Acrylic.update({ [handle] = { Enabled = false }, [second] = { Enabled = false } })
+assert(handle:GetStatus() == "disabled" and second:GetStatus() == "disabled")
+assert(initial.Enabled and not initiallyOff.Enabled, "batch did not restore shared DOF")
+Acrylic.update({ [handle] = { Enabled = true }, [second] = { Enabled = true } })
+assert(handle:GetStatus() == "visible" and second:GetStatus() == "visible")
+assert(not initial.Enabled, "batch did not activate shared DOF")
+checkGeometry(handle, 6, true)
+checkGeometry(second, 18, true)
+
 handle:SetEnabled(false)
 assert(handle:GetStatus() == "disabled" and not handle:IsEnabled())
 assert(not initial.Enabled, "one handle restored shared DOF too early")

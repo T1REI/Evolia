@@ -28,7 +28,7 @@ assert(Evolia:Init() == Evolia)
 assert(requests == 1 and blurCount() == 1 and input.InputBegan:Count() == 1)
 assert(not Evolia:IsVisible() and onlyBlur().Size == 0 and not onlyBlur().Enabled)
 local gui = child(playerGui, "Evolia")
-assert(#gui:GetChildren() == 13 and not gui.Enabled, "expected thirteen hidden tiles")
+assert(#gui:GetChildren() == 85 and not gui.Enabled, "expected eighty-five hidden tiles")
 for _, tile in gui:GetChildren() do
 	assert(tile:IsA("Frame") and tile.BackgroundTransparency == 1)
 	assert(Acrylic.get(tile) and not Acrylic.get(tile):IsEnabled(), "tile missing Acrylic")
@@ -52,9 +52,9 @@ for _ = 1, 12 do
 	last = onlyBlur().Size
 end
 assert(last > 0 and last < 24)
-local firstTile = child(gui, "Tile7")
-local lastTile = child(gui, "Tile13")
-assert(firstTile.BackgroundTransparency > 0.42 and firstTile.BackgroundTransparency < 1)
+local firstTile = child(gui, "Tile43")
+local lastTile = child(gui, "Tile85")
+assert(firstTile.BackgroundTransparency > 0.24 and firstTile.BackgroundTransparency < 1)
 assert(lastTile.BackgroundTransparency > firstTile.BackgroundTransparency, "reveal has no gentle sequence")
 assert(Acrylic.get(firstTile):GetStatus() == "visible", "tile glass is missing")
 local tileBeforeReverse = firstTile.BackgroundTransparency
@@ -74,7 +74,7 @@ for index = 1, 21 do press(); stepFrames(1, 1/144) end
 assert(Evolia:IsVisible())
 advance(2, 144)
 assert(onlyBlur().Size == 24 and onlyBlur().Enabled)
-assert(gui.Enabled and math.abs(firstTile.BackgroundTransparency - 0.42) < 0.000001)
+assert(gui.Enabled and math.abs(firstTile.BackgroundTransparency - 0.24) < 0.000001)
 local function checkLayout()
 	local left, top, right, bottom = math.huge, math.huge, -math.huge, -math.huge
 	local firstWidth
@@ -88,16 +88,16 @@ local function checkLayout()
 		if not row then row = {}; rows[p.Y] = row end
 		table.insert(row, p.X)
 		assert(Acrylic.get(tile):GetStatus() == "visible", "small tile glass is missing")
-		assert(tile.BackgroundColor3.X > 0.94 and tile.BackgroundColor3.Y > 0.94
-			and tile.BackgroundColor3.Z > 0.94, "tile is not near-white")
+		assert(tile.BackgroundColor3 == Color3.new(1, 1, 1), "tile tint must be neutral white")
+		assert(tile:FindFirstChildOfClass("UIStroke").Color == Color3.new(1, 1, 1), "border tint must be neutral white")
 		left, top = math.min(left, p.X), math.min(top, p.Y)
 		right, bottom = math.max(right, p.X + size.X), math.max(bottom, p.Y + size.Y)
 	end
 	local heights = {}
 	for y in rows do table.insert(heights, y) end
 	table.sort(heights)
-	assert(#heights == 5, "diamond must have five rows")
-	local expected = { 1, 3, 5, 3, 1 }
+	assert(#heights == 13, "diamond must have thirteen rows")
+	local expected = { 1, 3, 5, 7, 9, 11, 13, 11, 9, 7, 5, 3, 1 }
 	local gap
 	for index, y in heights do
 		local row = rows[y]
@@ -120,7 +120,7 @@ local function checkLayout()
 	assert(right - left <= view.X * 0.52 + 0.001 and bottom - top <= view.Y * 0.42 + 0.001, "UI occupies too much screen")
 end
 checkLayout()
-assert(firstTile.AbsoluteSize.X == 24, "default tiles are not small")
+assert(firstTile.AbsoluteSize.X == 12, "default tiles are not small")
 for _, size in { vector(320, 568), vector(1920, 1080), vector(568, 320), vector(3840, 2160) } do
 	view = size
 	workspace.CurrentCamera.ViewportSize = size

@@ -52,6 +52,8 @@ Give the target a transparent background so the scene can show through it. Acryl
 
 An attachment is unique per target within one loaded API. `Acrylic.get(target)` returns its existing handle. Duplicate attachment is an error.
 
+Update several panel effects together with `Acrylic.update({ [firstHandle] = { Enabled = true }, [secondHandle] = { Enabled = true } })`. The module validates every change before applying the batch, then refreshes rendering once. Every key must be a live panel handle from the same loaded module. Single-handle `SetOptions` remains available.
+
 ## Per-target options
 
 Pass any subset to `attach` or `handle:SetOptions`. Updates merge with current options. Unknown names and invalid values raise an error before changing options. `GetOptions` returns a copy.

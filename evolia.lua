@@ -2,15 +2,16 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 
-local Evolia = { Version = "0.2.1" }
+local Evolia = { Version = "0.2.2" }
 local Window = {}
 Window.__index = Window
 local acrylic
 local current
 local runtimeKey = "__EvoliaUIRuntime"
 local tileLayout = {}
-for row = -2, 2 do
-	local halfWidth = 2 - math.abs(row)
+local diamondRadius = 6
+for row = -diamondRadius, diamondRadius do
+	local halfWidth = diamondRadius - math.abs(row)
 	for column = -halfWidth, halfWidth do
 		table.insert(tileLayout, { column = column, row = row, wave = math.abs(column) + math.abs(row) })
 	end
@@ -21,11 +22,11 @@ local defaults = {
 	toggleKey = Enum.KeyCode.RightShift,
 	blurSize = 24,
 	animationDuration = 0.7,
-	tileSize = 24,
-	tileGap = 6,
-	tileColor = Color3.fromRGB(242, 247, 252),
-	tileTransparency = 0.42,
-	cornerRadius = 6,
+	tileSize = 12,
+	tileGap = 4,
+	tileColor = Color3.fromRGB(255, 255, 255),
+	tileTransparency = 0.24,
+	cornerRadius = 2,
 }
 
 local function keyCode(value)
@@ -79,9 +80,11 @@ end
 function Window:_layout()
 	local viewport = self._gui.AbsoluteSize
 	local settings = self._settings
-	local width = settings.tileSize * 5 + settings.tileGap * 4
+	local diameter = diamondRadius * 2 + 1
+	local width = settings.tileSize * diameter + settings.tileGap * (diameter - 1)
 	local height = width
 	local scale = math.max(0, math.min(1, viewport.X * 0.52 / width, viewport.Y * 0.42 / height))
+	local updates = {}
 	for _, tile in self._tiles do
 		local amount = math.clamp(tile.amount, 0, 1)
 		local size = settings.tileSize * scale * (0.94 + 0.06 * amount)
@@ -93,11 +96,12 @@ function Window:_layout()
 		tile.corner.CornerRadius = UDim.new(0, settings.cornerRadius * scale)
 		tile.frame.BackgroundTransparency = 1 - (1 - settings.tileTransparency) * amount
 		tile.stroke.Transparency = 1 - 0.35 * amount
-		tile.glass:SetOptions({
+		updates[tile.glass] = {
 			Enabled = amount > 0, GlassTransparency = 0.999 - 0.019 * amount,
 			EdgeCompensation = Vector2.new(math.min(0.8, size / 120), 0),
-		})
+		}
 	end
+	acrylic.update(updates)
 end
 
 function Window:_animate()
@@ -169,8 +173,9 @@ function Evolia:CreateWindow(options)
 		local chunk, problem = loadstring(source)
 		assert(chunk, "Evolia: could not compile Acrylic: " .. tostring(problem))
 		local loaded = chunk()
-		assert(type(loaded) == "table" and type(loaded.fullscreen) == "function" and type(loaded.attach) == "function",
-			"Evolia: Acrylic must provide panel and fullscreen effects")
+		assert(type(loaded) == "table" and type(loaded.fullscreen) == "function"
+			and type(loaded.attach) == "function" and type(loaded.update) == "function",
+			"Evolia: Acrylic must provide panel, fullscreen and batch update APIs")
 		acrylic = loaded
 	end
 	local environment = type(getgenv) == "function" and getgenv() or getfenv(0)
@@ -193,10 +198,10 @@ function Evolia:CreateWindow(options)
 			}, window._gui)
 			local corner = create("UICorner", { CornerRadius = UDim.new(0, settings.cornerRadius) }, frame)
 			local stroke = create("UIStroke", {
-				ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = Color3.fromRGB(250, 252, 255),
+				ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = Color3.fromRGB(255, 255, 255),
 				Thickness = 1, Transparency = 1,
 			}, frame)
-			local glass = acrylic.attach(frame, { Enabled = false, GlassTransparency = 0.999 })
+			local glass = acrylic.attach(frame, { Enabled = false, GlassTransparency = 0.999, CornerSegments = 4 })
 			table.insert(window._tiles, {
 				frame = frame, corner = corner, stroke = stroke, glass = glass,
 				cell = cell, amount = 0, velocity = 0,

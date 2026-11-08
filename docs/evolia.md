@@ -1,6 +1,6 @@
 # Evolia UI library
 
-Evolia is built incrementally. This stage displays thirteen small, near-white Acrylic squares in a centered diamond over animated fullscreen background blur. Its five rows contain 1–3–5–3–1 squares with uniform sizes and gaps. There are no labels, buttons, or tabs yet.
+Evolia is built incrementally. This stage displays 85 tiny white Acrylic squares in a centered diamond over animated fullscreen background blur. Its thirteen rows contain 1–3–5–7–9–11–13–11–9–7–5–3–1 squares with uniform sizes and gaps. There are no labels, buttons, or tabs yet.
 
 ## Load and create
 
@@ -24,11 +24,11 @@ local Window = Evolia:CreateWindow({
     toggleKey = Enum.KeyCode.RightShift,
     blurSize = 24,
     animationDuration = 0.7,
-    tileSize = 24,
-    tileGap = 6,
-    tileColor = Color3.fromRGB(242, 247, 252),
-    tileTransparency = 0.42,
-    cornerRadius = 6,
+    tileSize = 12,
+    tileGap = 4,
+    tileColor = Color3.fromRGB(255, 255, 255),
+    tileTransparency = 0.24,
+    cornerRadius = 2,
 })
 ```
 
@@ -38,13 +38,13 @@ local Window = Evolia:CreateWindow({
 | `toggleKey` | `Enum.KeyCode.RightShift` | KeyCode or exact name, such as `"F4"`; Unknown is rejected. |
 | `blurSize` | `24` | Fullscreen blur radius, `0..56`. |
 | `animationDuration` | `0.7` | Response time, `0.05..10` seconds. |
-| `tileSize` | `24` | Square side, `12..180` UI pixels before responsive scaling. |
-| `tileGap` | `6` | Gap between squares, `4..48` UI pixels before scaling. |
-| `tileColor` | `Color3.fromRGB(242, 247, 252)` | Near-white tile tint with a subtle cool hue. |
-| `tileTransparency` | `0.42` | Tint transparency at rest, `0..1`. |
-| `cornerRadius` | `6` | Corner radius, `0..24` UI pixels before scaling. |
+| `tileSize` | `12` | Square side, `12..180` UI pixels before responsive scaling. |
+| `tileGap` | `4` | Gap between squares, `4..48` UI pixels before scaling. |
+| `tileColor` | `Color3.fromRGB(255, 255, 255)` | Neutral white tint without a blue hue. |
+| `tileTransparency` | `0.24` | Tint transparency at rest, `0..1`. |
+| `cornerRadius` | `2` | Corner radius, `0..24` UI pixels before scaling. |
 
-The default diamond measures 144 × 144 UI pixels, with 24-pixel squares and 6-pixel gaps. Each row is centered independently. The composition remains centered on the full viewport and shrinks proportionally when needed to fit within 52% of viewport width and 42% of height. Squares stay square, gaps scale consistently, and the diamond never grows beyond its configured size.
+The default diamond measures 204 × 204 UI pixels, with 12-pixel squares and 4-pixel gaps. Each row is centered independently. The composition remains centered on the full viewport and shrinks proportionally when needed to fit within 52% of viewport width and 42% of height. Squares stay square, gaps scale consistently, and the diamond never grows beyond its configured size.
 
 ## Visibility and key binding
 
@@ -66,7 +66,7 @@ Changing the key takes effect immediately, including during animation, and does 
 
 Setters and visibility methods return the handle for chaining. `IsVisible` reports the requested destination during animation. `Destroy` immediately removes the GUI, panel masks, fullscreen blur, and all associated connections. It is safe to repeat; a destroyed handle cannot be shown again. Destroying the ScreenGui externally also cleans up its window.
 
-The reveal combines tint and border opacity, a small upward movement (one eighth of the tile size, 3 pixels by default), and a scale from 94% to 100%. A small variation in response speed creates a symmetric reveal from the center toward the outer squares. The fullscreen blur and tile transitions use analytically integrated critically damped springs. Reversals retain current amount and velocity. Duration controls response speed rather than a fixed deadline. Animation callbacks disconnect after settling; active panel masks continue to track the camera.
+The reveal combines tint and border opacity, a small upward movement (one eighth of the tile size, 1.5 pixels by default), and a scale from 94% to 100%. A small variation in response speed creates a symmetric reveal from the center toward the outer squares. The fullscreen blur and tile transitions use analytically integrated critically damped springs. Reversals retain current amount and velocity. Duration controls response speed rather than a fixed deadline. Animation callbacks disconnect after settling; active panel masks continue to track the camera. All tile effect settings are submitted in one Acrylic batch per layout update. Small tile masks use four corner bands on each side.
 
 ## Existing Init API
 

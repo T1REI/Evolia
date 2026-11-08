@@ -3,7 +3,7 @@ local RunService = game:GetService("RunService")
 local GuiService = game:GetService("GuiService")
 local HttpService = game:GetService("HttpService")
 
-local Acrylic = { Version = "0.2.1" }
+local Acrylic = { Version = "0.2.2" }
 local Handle = {}
 Handle.__index = Handle
 
@@ -376,14 +376,34 @@ local function startManager()
 	RunService:BindToRenderStep(name, Enum.RenderPriority.Last.Value + 1, step)
 end
 
+local function applyOptions(handle, options)
+	local previous = handle._options
+	handle._options = options
+	handle._error, handle._warned = nil, nil
+	if previous.CornerSegments ~= options.CornerSegments or previous.GlassColor ~= options.GlassColor then
+		resizeSlices(handle)
+	elseif previous.EdgeCompensation ~= options.EdgeCompensation or previous.Padding ~= options.Padding then
+		handle._cache = nil
+	end
+end
+
 function Handle:SetOptions(changes)
 	assert(not self._destroyed, "Acrylic: handle was destroyed")
-	self._options = merge(self._options, changes, validators)
-	self._error, self._warned = nil, nil
-	if changes.CornerSegments ~= nil or changes.GlassColor ~= nil then resizeSlices(self)
-	elseif changes.EdgeCompensation ~= nil or changes.Padding ~= nil then self._cache = nil end
+	applyOptions(self, merge(self._options, changes, validators))
 	step()
 	return self
+end
+
+function Acrylic.update(updates)
+	assert(type(updates) == "table", "Acrylic: expected a handle-to-options table")
+	local checked = {}
+	for handle, changes in pairs(updates) do
+		assert(type(handle) == "table" and getmetatable(handle) == Handle and not handle._destroyed,
+			"Acrylic: batch requires live panel handles from this module")
+		checked[handle] = merge(handle._options, changes, validators)
+	end
+	for handle, options in pairs(checked) do applyOptions(handle, options) end
+	if manager then step() end
 end
 
 function Handle:GetOptions()
