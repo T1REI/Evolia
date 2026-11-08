@@ -11,6 +11,11 @@ local function signal()
         Fire = function(_, ...)
             for _, c in table.clone(listeners) do if c.Connected then c.fn(...) end end
         end,
+        Count = function()
+            local n=0
+            for _,c in listeners do if c.Connected then n+=1 end end
+            return n
+        end,
     }
 end
 local vec = {}
@@ -58,11 +63,14 @@ local NumberSequence = {new=function(t) return t end}
 local NumberSequenceKeypoint = {new=function(t,v) return {t,v} end}
 local Random = {new=function() return {NextNumber=function(_,a,b) return (a or 0)+0.37*((b or 1)-(a or 0)) end} end}
 local Enum = setmetatable({RenderPriority={Camera={Value=200},Last={Value=2000}}},{__index=function(t,k)
-    local group=setmetatable({}, {__index=function(g,n) rawset(g,n,k..'.'..n);return g[n] end})
+    local group=setmetatable({}, {__index=function(g,n)
+        rawset(g,n,{_kind='EnumItem',EnumType=g,Name=n})
+        return g[n]
+    end})
     rawset(t,k,group);return group
 end})
 local eventNames = {Destroying=true,ChildAdded=true,InputBegan=true,InputChanged=true,InputEnded=true,
-    WindowFocusReleased=true,Activated=true,MouseEnter=true,MouseLeave=true}
+    WindowFocusReleased=true,Activated=true,MouseEnter=true,MouseLeave=true,RenderStepped=true}
 local methods = {}
 local inst = {}
 local view = vector(1280,720)
@@ -140,7 +148,7 @@ local player=Instance.new('Player')
 playerGui.Parent=player
 local lighting=Instance.new('Lighting')
 local input=Instance.new('UserInputService')
-function input:GetFocusedTextBox() return nil end
+function input:GetFocusedTextBox() return self.FocusedTextBox end
 local frames={}
 local run=Instance.new('RunService')
 function run:IsClient() return true end
@@ -178,8 +186,11 @@ local initiallyOff=Instance.new('DepthOfFieldEffect');initiallyOff.Enabled=false
 
 local nativeTypeof=typeof
 local function typeof(value) return type(value)=='table' and value._kind or nativeTypeof(value) end
-local function stepFrames(n)
-    for _=1,n or 1 do for _,fn in table.clone(frames) do fn() end end
+local function stepFrames(n,dt)
+    for _=1,n or 1 do
+        for _,fn in table.clone(frames) do fn(dt or 1/60) end
+        run.RenderStepped:Fire(dt or 1/60)
+    end
 end
 local function count(t) local n=0;for _ in t do n+=1 end;return n end
 local function child(p,n) return assert(p:FindFirstChild(n),n) end

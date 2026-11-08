@@ -3,7 +3,7 @@ local RunService = game:GetService("RunService")
 local GuiService = game:GetService("GuiService")
 local HttpService = game:GetService("HttpService")
 
-local Acrylic = { Version = "0.1.0" }
+local Acrylic = { Version = "0.2.0" }
 local Handle = {}
 Handle.__index = Handle
 
@@ -33,6 +33,7 @@ local config = {
 local handles = {}
 local targets = {}
 local manager
+local fullscreens = {}
 
 local function finite(value)
 	return type(value) == "number" and value == value and math.abs(value) < math.huge
@@ -467,8 +468,96 @@ function Acrylic.getConfig()
 	return table.clone(config)
 end
 
+local Fullscreen = {}
+Fullscreen.__index = Fullscreen
+local fullscreenDefaults = {
+	Size = 24,
+	Duration = 0.7,
+	Visible = false,
+}
+local fullscreenValidators = {
+	Size = function(v) return range(v, 0, 56) end,
+	Duration = function(v) return range(v, 0.05, 10) end,
+	Visible = function(v) return type(v) == "boolean" end,
+}
+
+function Fullscreen:_animate()
+	if self._connection then return end
+	self._effect.Enabled = true
+	self._connection = RunService.RenderStepped:Connect(function(deltaTime)
+		local target = self._options.Visible and 1 or 0
+		local omega = 10 / self._options.Duration
+		local displacement = self._amount - target
+		local term = self._velocity + omega * displacement
+		local decay = math.exp(-omega * deltaTime)
+		self._amount = target + (displacement + term * deltaTime) * decay
+		self._velocity = (self._velocity - omega * term * deltaTime) * decay
+		if math.abs(self._amount - target) < 0.0001 and math.abs(self._velocity) < 0.001 then
+			self._amount, self._velocity = target, 0
+			self._connection:Disconnect()
+			self._connection = nil
+		end
+		self._effect.Size = math.clamp(self._amount, 0, 1) * self._options.Size
+		self._effect.Enabled = self._amount > 0 or self._options.Visible
+	end)
+end
+
+function Fullscreen:SetOptions(changes)
+	assert(not self._destroyed, "Acrylic: fullscreen handle was destroyed")
+	self._options = merge(self._options, changes, fullscreenValidators)
+	self._effect.Size = math.clamp(self._amount, 0, 1) * self._options.Size
+	local target = self._options.Visible and 1 or 0
+	if self._amount ~= target or self._velocity ~= 0 then self:_animate() end
+	return self
+end
+
+function Fullscreen:SetVisible(visible)
+	return self:SetOptions({ Visible = visible })
+end
+
+function Fullscreen:IsVisible()
+	return not self._destroyed and self._options.Visible
+end
+
+function Fullscreen:GetOptions()
+	return table.clone(self._options)
+end
+
+function Fullscreen:GetSize()
+	return self._destroyed and 0 or self._effect.Size
+end
+
+function Fullscreen:Destroy()
+	if self._destroyed then return end
+	self._destroyed = true
+	if self._connection then self._connection:Disconnect(); self._connection = nil end
+	self._destroyConnection:Disconnect()
+	self._effect:Destroy()
+	fullscreens[self] = nil
+end
+
+function Acrylic.fullscreen(options)
+	assert(RunService:IsClient(), "Acrylic: fullscreen must run on the client")
+	local checked = merge(fullscreenDefaults, options or {}, fullscreenValidators)
+	local handle = setmetatable({
+		_options = checked,
+		_amount = 0,
+		_velocity = 0,
+		_effect = create("BlurEffect", {
+			Name = "EvoliaBackgroundBlur",
+			Size = 0,
+			Enabled = false,
+		}, Lighting),
+	}, Fullscreen)
+	fullscreens[handle] = true
+	handle._destroyConnection = handle._effect.Destroying:Connect(function() handle:Destroy() end)
+	if checked.Visible then handle:_animate() end
+	return handle
+end
+
 function Acrylic.destroyAll()
 	for _, handle in table.clone(handles) do handle:Destroy() end
+	for handle in table.clone(fullscreens) do handle:Destroy() end
 end
 
 Acrylic.Defaults = defaults

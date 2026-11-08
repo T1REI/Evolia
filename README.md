@@ -2,9 +2,9 @@
 
 [![Luau checks](https://github.com/T1REI/Evolia/actions/workflows/ci.yml/badge.svg)](https://github.com/T1REI/Evolia/actions/workflows/ci.yml)
 
-A collection of configurable Roblox client modules by **T1REI**.
+A Roblox UI library by **T1REI**, built incrementally from reusable client modules.
 
-Modules are distributed as standalone Lua files and loaded with `loadstring`. Each module returns an API; loading Acrylic alone creates no UI or render loop.
+The current UI stage is intentionally minimal: **Right Shift toggles a smoothly animated fullscreen background blur**. No windows, buttons, tint overlays, or other UI elements are created at this stage.
 
 ## Modules
 
@@ -17,42 +17,29 @@ Modules are distributed as standalone Lua files and loaded with `loadstring`. Ea
 Run this in a client environment that provides `loadstring` and `game:HttpGet`:
 
 ```lua
-local Acrylic = loadstring(game:HttpGet("https://raw.githubusercontent.com/T1REI/Evolia/main/modules/ui/acrylic.lua"))()
-
--- Use a GuiObject from your own ScreenGui.
-local panel = game:GetService("Players").LocalPlayer.PlayerGui.MyGui.MyPanel
-panel.BackgroundTransparency = 1
-
-local glass = Acrylic.attach(panel, {
-    CornerRadius = 6,
-    Style = true,
-    TintColor = Color3.fromRGB(255, 255, 255),
-    TintTransparency = 0.35,
-})
-
-glass:SetOptions({ TintTransparency = 0.5 })
-glass:SetEnabled(false)
-glass:SetEnabled(true)
-
--- Removes the effect and its optional styling; keeps your panel.
-glass:Destroy()
+local Evolia = loadstring(game:HttpGet("https://raw.githubusercontent.com/T1REI/Evolia/main/evolia.lua"))()
+Evolia:Init()
 ```
 
-Standard Roblox LocalScripts do not provide this client loading path. The loader above is for environments that expose those functions. Reuse the returned `Acrylic` table for all panels so they share one render loop and one depth-of-field controller.
+Loading returns an API. `Init` loads the Acrylic module, starts hidden, and binds Right Shift. A fresh initialized Evolia instance replaces its previous runtime. Standard Roblox LocalScripts do not provide this client loading path.
 
-For a complete draggable white window, run [`examples/acrylic.lua`](examples/acrylic.lua). See the [Acrylic reference](docs/acrylic.md) for every option, lifecycle method, and rendering limit.
+See the [Evolia reference](docs/evolia.md) for settings and lifecycle methods. The standalone [Acrylic reference](docs/acrylic.md) covers panel effects and fullscreen blur. [`examples/evolia.lua`](examples/evolia.lua) runs the current UI stage; [`examples/acrylic.lua`](examples/acrylic.lua) is a separate panel demonstration.
 
 ## Layout
 
 ```text
+evolia.lua
 modules/
   ui/
     acrylic.lua
 examples/
+  evolia.lua
   acrylic.lua
 docs/
+  evolia.md
   acrylic.md
 tests/
+  evolia.spec.lua
   acrylic.spec.lua
   roblox_mock.lua
   run.py
@@ -66,11 +53,12 @@ Install Python 3 and the official [Luau CLI](https://github.com/luau-lang/luau/r
 
 ```sh
 python tests/run.py --luau /path/to/luau
+luau-compile --null evolia.lua
 luau-compile --null modules/ui/acrylic.lua
 luau-compile --null examples/acrylic.lua
 ```
 
-The tests execute the real module against a simulated Roblox API. They cover geometry, rotation, clipping, settings, multiple attachments, visibility, camera replacement, and cleanup. They do not validate GPU rendering or guarantee an identical blur boundary on every graphics setting. Check the example in a real client when changing the effect.
+Tests execute the real library and module against a simulated Roblox API. They cover animation reversal, repeated input, frame-rate independence, keyboard filtering, geometry, rotation, clipping, settings, visibility, camera replacement, and cleanup. They do not validate GPU rendering or the subjective animation feel in a real client.
 
 ## License
 

@@ -22,7 +22,7 @@ jobs:
           chmod +x "$RUNNER_TEMP/luau/luau" "$RUNNER_TEMP/luau/luau-compile"
       - name: Compile distributed Lua files
         shell: bash
-        run: '"$RUNNER_TEMP/luau/luau-compile" --null modules/ui/acrylic.lua examples/acrylic.lua'
+        run: '"$RUNNER_TEMP/luau/luau-compile" --null evolia.lua modules/ui/acrylic.lua examples/acrylic.lua examples/evolia.lua'
       - name: Run module checks
         shell: bash
         run: python3 tests/run.py --luau "$RUNNER_TEMP/luau/luau"
