@@ -20,9 +20,6 @@ local function signal()
 end
 local vec = {}
 vec.__index = function(v, key)
-    if key=='R' then return v.X end
-    if key=='G' then return v.Y end
-    if key=='B' then return v.Z end
     if key == 'Magnitude' then return math.sqrt(v.X*v.X + v.Y*v.Y + v.Z*v.Z) end
     if key == 'Dot' then return function(a,b) return a.X*b.X + a.Y*b.Y + a.Z*b.Z end end
     if key == 'Lerp' then return function(a,b,t) return a+(b-a)*t end end
@@ -58,40 +55,16 @@ function CFrame.new(x,y,z) return setmetatable({X=x or 0,Y=y or 0,Z=z or 0,Angle
 function CFrame.Angles(_,_,angle) local result=CFrame.new();result.Angle=angle;return result end
 local Color3 = {new=function(...) local v=vector(...);v._kind='Color3';return v end}
 Color3.fromRGB=function(r,g,b) return Color3.new(r/255,g/255,b/255) end
-function Color3.fromHex(hex)
-    return Color3.fromRGB(tonumber(hex:sub(1,2),16),tonumber(hex:sub(3,4),16),tonumber(hex:sub(5,6),16))
-end
-function Color3.fromHSV(h,s,v)
-    local i=math.floor(h*6);local f=h*6-i;local p=v*(1-s);local q=v*(1-f*s);local t=v*(1-(1-f)*s)
-    local rgb={{v,t,p},{q,v,p},{p,v,t},{p,q,v},{t,p,v},{v,p,q}}
-    return Color3.new(unpack(rgb[i%6+1]))
-end
-local vectorIndex=vec.__index
-vec.__index=function(v,key)
-    if key=='ToHSV' then return function(c)
-        local mx,mn=math.max(c.X,c.Y,c.Z),math.min(c.X,c.Y,c.Z)
-        local d=mx-mn;local h=0
-        if d>0 then
-            if mx==c.X then h=((c.Y-c.Z)/d)%6 elseif mx==c.Y then h=(c.Z-c.X)/d+2 else h=(c.X-c.Y)/d+4 end
-        end
-        return h/6,mx==0 and 0 or d/mx,mx
-    end end
-    if key=='ToHex' then return function(c) return string.format('%02X%02X%02X',math.floor(c.X*255+.5),math.floor(c.Y*255+.5),math.floor(c.Z*255+.5)) end end
-    return vectorIndex(v,key)
-end
 local UDim = {new=function(s,o) return {Scale=s,Offset=o,_kind="UDim"} end}
-local UDim2 = {new=function(xs,xo,ys,yo) return {X=UDim.new(xs,xo),Y=UDim.new(ys,yo),_kind='UDim2'} end}
+local UDim2 = {new=function(xs,xo,ys,yo) return {X=UDim.new(xs,xo),Y=UDim.new(ys,yo)} end}
 function UDim2.fromOffset(x,y) return UDim2.new(0,x,0,y) end
 function UDim2.fromScale(x,y) return UDim2.new(x,0,y,0) end
 local NumberSequence = {new=function(t) return t end}
 local NumberSequenceKeypoint = {new=function(t,v) return {t,v} end}
-local ColorSequence = {new=function(t) return t end}
-local ColorSequenceKeypoint = {new=function(t,v) return {t,v} end}
-local function warn(...) end
 local Random = {new=function() return {NextNumber=function(_,a,b) return (a or 0)+0.37*((b or 1)-(a or 0)) end} end}
 local Enum = setmetatable({RenderPriority={Camera={Value=200},Last={Value=2000}}},{__index=function(t,k)
     local group=setmetatable({}, {__index=function(g,n)
-        if k=='KeyCode' and n~='Unknown' and n~='RightShift' and n~='LeftAlt' and n~='T' and n~='F4' and n~='Escape' then
+        if k=='KeyCode' and n~='Unknown' and n~='RightShift' and n~='LeftAlt' and n~='T' and n~='F4' then
             error('Invalid KeyCode '..n)
         end
         rawset(g,n,{_kind='EnumItem',EnumType=g,Name=n})
@@ -100,7 +73,7 @@ local Enum = setmetatable({RenderPriority={Camera={Value=200},Last={Value=2000}}
     rawset(t,k,group);return group
 end})
 local eventNames = {Destroying=true,ChildAdded=true,InputBegan=true,InputChanged=true,InputEnded=true,
-    WindowFocusReleased=true,Activated=true,MouseEnter=true,MouseLeave=true,RenderStepped=true,FocusLost=true}
+    WindowFocusReleased=true,Activated=true,MouseEnter=true,MouseLeave=true,RenderStepped=true}
 local methods = {}
 local inst = {}
 local view = vector(1280,720)
@@ -165,7 +138,7 @@ function methods:GetAttribute(k) return self._attributes[k] end
 function methods:FindFirstChild(k)
     for _,c in self._children do if c.Name==k then return c end end
 end
-function methods:WaitForChild(k) return (assert(self:FindFirstChild(k),k)) end
+function methods:WaitForChild(k) return assert(self:FindFirstChild(k),k) end
 function methods:Destroy()
     self.Destroying:Fire()
     for _,c in self:GetChildren() do c:Destroy() end

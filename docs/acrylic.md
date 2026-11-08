@@ -10,11 +10,11 @@ local Acrylic = loadstring(game:HttpGet("https://raw.githubusercontent.com/T1REI
 
 This requires a client environment with `loadstring` and `game:HttpGet`. Loading returns the API without creating an effect. The first attachment starts rendering; removing the last attachment releases the shared resources. Loading several separate copies creates separate controllers, so reuse one API table.
 
-The `main` URL tracks development. To pin a deployment, replace `main` in the URL with a commit SHA from this repository.
+The `main` URL provides the approved version. Test versions belong to `Preview` and reach `main` only after the owner's approval. To pin a deployment, replace `main` in the URL with a commit SHA from this repository.
 
 ## Fullscreen blur
 
-Evolia's UI background uses this independent native BlurEffect controller:
+Use this independent native BlurEffect controller for fullscreen background blur:
 
 ```lua
 local background = Acrylic.fullscreen({ Size = 24, Duration = 0.7, Visible = false })
@@ -31,7 +31,7 @@ background:Destroy()
 
 `Size` accepts `0..56`, `Duration` accepts `0.05..10`, and `Visible` is a boolean. Duration controls the settling response, not a fixed tween deadline. Visibility reversals preserve animation amount and velocity. The render callback disconnects at rest. `Destroy` cleans up immediately; `Acrylic.destroyAll()` also removes fullscreen controllers. These controllers do not change the panel DOF configuration or other scene effects.
 
-The controller adds no UI or geometry. It blurs the 3D world, not other ScreenGui objects. Other active BlurEffects are left untouched; Roblox renders the largest blur size. See [Evolia](evolia.md) for the keyboard-controlled UI entry point.
+The controller adds no UI or geometry. It blurs the 3D world, not other ScreenGui objects. Other active BlurEffects are left untouched; Roblox renders the largest blur size.
 
 ## Attach
 
