@@ -2,21 +2,28 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 
-local Evolia = { Version = "0.2.0" }
+local Evolia = { Version = "0.2.1" }
 local Window = {}
 Window.__index = Window
 local acrylic
 local current
 local runtimeKey = "__EvoliaUIRuntime"
+local tileLayout = {}
+for row = -2, 2 do
+	local halfWidth = 2 - math.abs(row)
+	for column = -halfWidth, halfWidth do
+		table.insert(tileLayout, { column = column, row = row, wave = math.abs(column) + math.abs(row) })
+	end
+end
 
 local defaults = {
 	name = "Evolia",
 	toggleKey = Enum.KeyCode.RightShift,
 	blurSize = 24,
 	animationDuration = 0.7,
-	tileSize = 96,
-	tileGap = 12,
-	tileColor = Color3.fromRGB(186, 219, 248),
+	tileSize = 24,
+	tileGap = 6,
+	tileColor = Color3.fromRGB(242, 247, 252),
 	tileTransparency = 0.42,
 	cornerRadius = 6,
 }
@@ -39,7 +46,7 @@ local validators = {
 	name = function(v) return type(v) == "string" and #v > 0 and #v <= 128 end,
 	blurSize = function(v) return range(v, 0, 56) end,
 	animationDuration = function(v) return range(v, 0.05, 10) end,
-	tileSize = function(v) return range(v, 48, 180) end,
+	tileSize = function(v) return range(v, 12, 180) end,
 	tileGap = function(v) return range(v, 4, 48) end,
 	tileColor = function(v) return typeof(v) == "Color3" end,
 	tileTransparency = function(v) return range(v, 0, 1) end,
@@ -72,21 +79,24 @@ end
 function Window:_layout()
 	local viewport = self._gui.AbsoluteSize
 	local settings = self._settings
-	local width = settings.tileSize * 3 + settings.tileGap * 2
-	local height = settings.tileSize * 2 + settings.tileGap
+	local width = settings.tileSize * 5 + settings.tileGap * 4
+	local height = width
 	local scale = math.max(0, math.min(1, viewport.X * 0.52 / width, viewport.Y * 0.42 / height))
-	for index, tile in self._tiles do
+	for _, tile in self._tiles do
 		local amount = math.clamp(tile.amount, 0, 1)
 		local size = settings.tileSize * scale * (0.94 + 0.06 * amount)
-		local column, row = (index - 1) % 3, math.floor((index - 1) / 3)
 		tile.frame.Size = UDim2.fromOffset(size, size)
 		tile.frame.Position = UDim2.new(0.5,
-			(column - 1) * (settings.tileSize + settings.tileGap) * scale,
-			0.5, ((row - 0.5) * (settings.tileSize + settings.tileGap) + 12 * (1 - amount)) * scale)
+			tile.cell.column * (settings.tileSize + settings.tileGap) * scale,
+			0.5, (tile.cell.row * (settings.tileSize + settings.tileGap)
+				+ settings.tileSize * 0.125 * (1 - amount)) * scale)
 		tile.corner.CornerRadius = UDim.new(0, settings.cornerRadius * scale)
 		tile.frame.BackgroundTransparency = 1 - (1 - settings.tileTransparency) * amount
 		tile.stroke.Transparency = 1 - 0.35 * amount
-		tile.glass:SetOptions({ Enabled = amount > 0, GlassTransparency = 0.999 - 0.019 * amount })
+		tile.glass:SetOptions({
+			Enabled = amount > 0, GlassTransparency = 0.999 - 0.019 * amount,
+			EdgeCompensation = Vector2.new(math.min(0.8, size / 120), 0),
+		})
 	end
 end
 
@@ -96,8 +106,8 @@ function Window:_animate()
 	self._animationConnection = RunService.RenderStepped:Connect(function(dt)
 		local target = self._visible and 1 or 0
 		local settled = true
-		for index, tile in self._tiles do
-			local omega = 10 / (self._settings.animationDuration + (index - 1) * 0.025)
+		for _, tile in self._tiles do
+			local omega = 10 / (self._settings.animationDuration + tile.cell.wave * 0.04)
 			local displacement = tile.amount - target
 			local term = tile.velocity + omega * displacement
 			local decay = math.exp(-omega * dt)
@@ -176,18 +186,21 @@ function Evolia:CreateWindow(options)
 			ScreenInsets = Enum.ScreenInsets.None, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, DisplayOrder = 100,
 		}, Players.LocalPlayer:WaitForChild("PlayerGui"))
 		window._blur = acrylic.fullscreen({ Size = settings.blurSize, Duration = settings.animationDuration })
-		for index = 1, 6 do
+		for index, cell in tileLayout do
 			local frame = create("Frame", {
 				Name = "Tile" .. index, AnchorPoint = Vector2.new(0.5, 0.5), BorderSizePixel = 0,
 				BackgroundColor3 = settings.tileColor, BackgroundTransparency = 1, Active = false,
 			}, window._gui)
 			local corner = create("UICorner", { CornerRadius = UDim.new(0, settings.cornerRadius) }, frame)
 			local stroke = create("UIStroke", {
-				ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = Color3.fromRGB(231, 245, 255),
+				ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = Color3.fromRGB(250, 252, 255),
 				Thickness = 1, Transparency = 1,
 			}, frame)
 			local glass = acrylic.attach(frame, { Enabled = false, GlassTransparency = 0.999 })
-			table.insert(window._tiles, { frame = frame, corner = corner, stroke = stroke, glass = glass, amount = 0, velocity = 0 })
+			table.insert(window._tiles, {
+				frame = frame, corner = corner, stroke = stroke, glass = glass,
+				cell = cell, amount = 0, velocity = 0,
+			})
 		end
 		window:_layout()
 		table.insert(window._connections, window._gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()

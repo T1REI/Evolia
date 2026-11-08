@@ -28,7 +28,7 @@ assert(Evolia:Init() == Evolia)
 assert(requests == 1 and blurCount() == 1 and input.InputBegan:Count() == 1)
 assert(not Evolia:IsVisible() and onlyBlur().Size == 0 and not onlyBlur().Enabled)
 local gui = child(playerGui, "Evolia")
-assert(#gui:GetChildren() == 6 and not gui.Enabled, "expected six hidden tiles")
+assert(#gui:GetChildren() == 13 and not gui.Enabled, "expected thirteen hidden tiles")
 for _, tile in gui:GetChildren() do
 	assert(tile:IsA("Frame") and tile.BackgroundTransparency == 1)
 	assert(Acrylic.get(tile) and not Acrylic.get(tile):IsEnabled(), "tile missing Acrylic")
@@ -52,8 +52,8 @@ for _ = 1, 12 do
 	last = onlyBlur().Size
 end
 assert(last > 0 and last < 24)
-local firstTile = child(gui, "Tile1")
-local lastTile = child(gui, "Tile6")
+local firstTile = child(gui, "Tile7")
+local lastTile = child(gui, "Tile13")
 assert(firstTile.BackgroundTransparency > 0.42 and firstTile.BackgroundTransparency < 1)
 assert(lastTile.BackgroundTransparency > firstTile.BackgroundTransparency, "reveal has no gentle sequence")
 assert(Acrylic.get(firstTile):GetStatus() == "visible", "tile glass is missing")
@@ -77,22 +77,51 @@ assert(onlyBlur().Size == 24 and onlyBlur().Enabled)
 assert(gui.Enabled and math.abs(firstTile.BackgroundTransparency - 0.42) < 0.000001)
 local function checkLayout()
 	local left, top, right, bottom = math.huge, math.huge, -math.huge, -math.huge
-	local lastRight, firstWidth
-	for index, tile in gui:GetChildren() do
+	local firstWidth
+	local rows = {}
+	for _, tile in gui:GetChildren() do
 		local p, size = tile.AbsolutePosition + coreInset, tile.AbsoluteSize
 		assert(math.abs(size.X - size.Y) < 0.000001, "tiles are not square")
 		assert(not firstWidth or math.abs(size.X - firstWidth) < 0.000001, "unequal tile sizes")
-		if (index - 1) % 3 ~= 0 then assert(p.X > lastRight, "tiles overlap or touch") end
-		firstWidth, lastRight = size.X, p.X + size.X
+		firstWidth = size.X
+		local row = rows[p.Y]
+		if not row then row = {}; rows[p.Y] = row end
+		table.insert(row, p.X)
+		assert(Acrylic.get(tile):GetStatus() == "visible", "small tile glass is missing")
+		assert(tile.BackgroundColor3.X > 0.94 and tile.BackgroundColor3.Y > 0.94
+			and tile.BackgroundColor3.Z > 0.94, "tile is not near-white")
 		left, top = math.min(left, p.X), math.min(top, p.Y)
 		right, bottom = math.max(right, p.X + size.X), math.max(bottom, p.Y + size.Y)
+	end
+	local heights = {}
+	for y in rows do table.insert(heights, y) end
+	table.sort(heights)
+	assert(#heights == 5, "diamond must have five rows")
+	local expected = { 1, 3, 5, 3, 1 }
+	local gap
+	for index, y in heights do
+		local row = rows[y]
+		table.sort(row)
+		assert(#row == expected[index], "incorrect diamond row count")
+		assert(math.abs((row[1] + row[#row] + firstWidth) / 2 - view.X / 2) < 0.000001,
+			"row is not centered")
+		for column = 2, #row do
+			local spacing = row[column] - row[column - 1] - firstWidth
+			assert(spacing > 0 and (not gap or math.abs(spacing - gap) < 0.000001), "unequal horizontal gaps")
+			gap = spacing
+		end
+	end
+	for index = 2, #heights do
+		assert(math.abs(heights[index] - heights[index - 1] - firstWidth - gap) < 0.000001,
+			"vertical and horizontal gaps differ")
 	end
 	assert(math.abs((left + right) / 2 - view.X / 2) < 0.000001, "not horizontally centered")
 	assert(math.abs((top + bottom) / 2 - view.Y / 2) < 0.000001, "not vertically centered")
 	assert(right - left <= view.X * 0.52 + 0.001 and bottom - top <= view.Y * 0.42 + 0.001, "UI occupies too much screen")
 end
 checkLayout()
-for _, size in { vector(320, 568), vector(1920, 1080), vector(568, 320) } do
+assert(firstTile.AbsoluteSize.X == 24, "default tiles are not small")
+for _, size in { vector(320, 568), vector(1920, 1080), vector(568, 320), vector(3840, 2160) } do
 	view = size
 	workspace.CurrentCamera.ViewportSize = size
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Fire()

@@ -4,5 +4,7 @@ local Window = Evolia:CreateWindow({
     toggleKey = "RightShift",
     blurSize = 24,
     animationDuration = 0.7,
-    tileColor = Color3.fromRGB(186, 219, 248),
+    tileSize = 24,
+    tileGap = 6,
+    tileColor = Color3.fromRGB(242, 247, 252),
 })

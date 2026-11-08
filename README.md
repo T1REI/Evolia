@@ -4,7 +4,7 @@
 
 A Roblox UI library by **T1REI**, built incrementally from reusable client modules.
 
-The current UI stage is a compact **3 × 2 grid of pastel-blue Acrylic squares** with rounded corners and a smooth reveal over fullscreen background blur. Right Shift toggles the interface; the opening key is configurable. No text, buttons, or navigation are added yet.
+The current UI stage is a compact **diamond of 13 small, near-white Acrylic squares**, arranged in centered rows of 1–3–5–3–1 with equal sizes and gaps. Rounded corners and a gentle reveal from the center accompany fullscreen background blur. Right Shift toggles the interface; the opening key is configurable. No text, buttons, or navigation are added yet.
 
 ## Modules
 
